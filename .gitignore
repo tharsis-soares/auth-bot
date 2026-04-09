@@ -2,7 +2,7 @@
 *.key
 *.pfx
 *.crt
-config/
+/config/
 
 __pychache__/
 *.py[cod]
