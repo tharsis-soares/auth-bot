@@ -25,8 +25,8 @@ Automação de três níveis de autenticação com complexidade progressiva, des
 ## Instalação
 
 ```bash
-git clone <repo-url>
-cd doc9
+git clone https://github.com/tharsis-soares/auth-bot
+cd auth-bot
 poetry install
 ```
 
