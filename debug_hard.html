@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Difícil — Certificado Digital + Hash | RPA Challenge</title>
+    <meta name="description"
+        content="Teste de automação nível difícil: certificado digital mTLS + challenge hash dinâmico.">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="nav-logo">&gt;_ RPA_CHALLENGE<span class="blink">|</span></a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/easy/">Fácil</a></li>
+                <li><a href="/hard/" class="active">Difícil</a></li>
+                <li><a href="/extreme/">Extremo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero" style="padding:4rem 0 2rem;">
+        <div class="container">
+            <span class="card-badge badge-hard" style="font-size:0.8rem;">Nível 2</span>
+            <h1 class="fade-in" style="font-size:2.4rem; margin-top:0.8rem;">Certificado Digital + Hash</h1>
+            <p class="fade-in delay-1">
+                Login protegido por certificado digital e challenge dinâmico gerado por JavaScript.
+            </p>
+        </div>
+    </section>
+
+    <section class="container-sm" style="padding-bottom:4rem;">
+
+        <!-- Challenge Display -->
+        <div class="challenge-display fade-in delay-1" id="challengeBox">
+            <div class="label">🔑 Challenge Hash (gerado por JS a cada 30s)</div>
+            <div class="value" id="challengeValue">Gerando challenge...</div>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-box box-hard fade-in delay-2">
+            <h2>🔐 Autenticação — Etapa 1: Credenciais</h2>
+            <p class="desc">
+                Após validar credenciais + challenge, você será redirecionado para validação do certificado digital.
+            </p>
+
+            <div id="alert" class="alert" role="alert"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Usuário</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Digite seu usuário"
+                        autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Senha</label>
+                    <input type="password" id="password" name="password" class="form-input"
+                        placeholder="Digite sua senha" required>
+                </div>
+                <!-- Hidden fields -->
+                <input type="hidden" id="challenge" name="challenge">
+                <input type="hidden" id="timestamp" name="timestamp">
+                <input type="hidden" id="nonce" name="nonce">
+
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-block">
+                    Autenticar
+                </button>
+            </form>
+
+            <div style="margin-top:1.5rem;">
+                <table class="info-table">
+                    <tr>
+                        <td>Usuário</td>
+                        <td><code>operator</code></td>
+                    </tr>
+                    <tr>
+                        <td>Senha</td>
+                        <td><code>cert#Secure2026</code></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Cert download -->
+        <div class="download-box" style="margin-top:2rem;">
+            <p>📜 Certificado digital de teste:</p>
+            <a href="/download/certs/client.pfx" class="btn btn-primary btn-sm">⬇ Download client.pfx</a>
+            <a href="/download/certs/ca.crt" class="btn btn-outline btn-sm" style="margin-left:0.5rem;">⬇ CA
+                Certificate</a>
+            <p style="margin-top:0.8rem; font-size:0.8rem; color:var(--text-muted);">
+                Senha do PFX: <code style="color:var(--green-neon);">test123</code>
+            </p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&gt;_ built for hackers, by hackers // 2026</p>
+        </div>
+    </footer>
+
+    <!-- Challenge generation — JS claro e explícito -->
+    <script>
+        // Gera o challenge hash via SHA-256 no client
+        // O servidor valida recalculando o mesmo hash
+        const CHALLENGE_SECRET = 'rpa_hard_challenge_2026';
+
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        async function generateChallenge() {
+            const timestamp = Date.now().toString();
+            const nonce = Math.random().toString(36).substring(2, 18);
+            const challenge = await sha256(timestamp + nonce + CHALLENGE_SECRET);
+
+            document.getElementById('challengeValue').textContent = challenge;
+            document.getElementById('challenge').value = challenge;
+            document.getElementById('timestamp').value = timestamp;
+            document.getElementById('nonce').value = nonce;
+        }
+
+        generateChallenge();
+        setInterval(generateChallenge, 30000);
+    </script>
+
+    <script>
+        // Form submit — posts to port 3000 (this server), then redirects to port 3001 for cert
+        const form = document.getElementById('loginForm');
+        const alertEl = document.getElementById('alert');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Verificando...';
+            alertEl.className = 'alert';
+
+            try {
+                const res = await fetch('/api/hard/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value,
+                        challenge: document.getElementById('challenge').value,
+                        timestamp: document.getElementById('timestamp').value,
+                        nonce: document.getElementById('nonce').value
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alertEl.className = 'alert alert-success show';
+                    alertEl.innerHTML = `
+                    ✅ <strong>${data.message}</strong><br>
+                    <small>Redirecionando em 2s... (TTL: ${data.ttl_seconds}s)</small>
+                `;
+                    // Auto-redirect to port 3001 for certificate validation
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 2000);
+                } else {
+                    alertEl.className = 'alert alert-error show';
+                    alertEl.innerHTML = `❌ <strong>${data.message}</strong>`;
+                }
+            } catch (err) {
+                alertEl.className = 'alert alert-error show';
+                alertEl.innerHTML = `❌ Erro: ${err.message}`;
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Autenticar';
+        });
+    </script>
+</body>
+
+</html>

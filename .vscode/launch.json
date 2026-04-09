@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "type": "debugpy",
+  "request": "launch",
+  "program": "${file}",
+  "console": "integratedTerminal"
+}
