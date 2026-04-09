@@ -21,7 +21,7 @@ class PowService:
         async with websockets.connect(uri, ssl=ssl_ctx) as ws:
             raw = await asyncio.wait_for(ws.recv(), timeout=5)
             challenge = json.loads(raw)
-            self.logger.info(f"Challenge: {raw}")
+            self.logger.info(f"{raw}")
 
             prefix = challenge["prefix"]
             difficulty = challenge["difficulty"]
