@@ -10,6 +10,7 @@ from typing import Tuple
 from utils.interfaces import Logger
 from config.config import Config
 
+
 class PowService:
     def __init__(self, logger: Logger, config: Config):
         self.logger = logger
