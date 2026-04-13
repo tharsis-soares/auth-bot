@@ -5,6 +5,7 @@ from pathlib import Path
 BASE_URL = os.getenv("API_BASE_URL", "https://localhost:3000")
 BASE_URL_MTLS = os.getenv("API_BASE_URL_MTLS", "https://localhost:3001")
 
+
 class Config:
     # Easy Mode
     EASY_LOGIN_URL = f"{BASE_URL}/api/easy/login"
