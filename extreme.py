@@ -7,6 +7,7 @@ from utils.http_client import HttpxClient
 from config.config import Config
 from utils.logger import ConsoleLogger
 
+
 async def refactored_final_solution():
     config = Config()
     http_client = HttpxClient()
